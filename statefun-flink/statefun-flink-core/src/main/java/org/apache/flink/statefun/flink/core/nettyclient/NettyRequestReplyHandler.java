@@ -128,13 +128,24 @@ public final class NettyRequestReplyHandler extends ChannelDuplexHandler {
   }
 
   private DefaultHttpHeaders headers(NettyRequest req, ByteBuf bodyBuf) {
+    final var customizer = req.getCustomizer();
     final DefaultHttpHeaders headers;
-    if (cachedHeaders != null) {
-      headers = cachedHeaders;
+    if (customizer.extraHeadersSupplier == null) {
+      // no extra headers are in play so we can used cached headers
+      if (cachedHeaders != null) {
+        headers = cachedHeaders;
+      } else {
+        headers = new DefaultHttpHeaders();
+        headers.add(req.headers());
+        this.cachedHeaders = headers;
+      }
     } else {
+      // extra headers are in play, so build up the set of headers
       headers = new DefaultHttpHeaders();
       headers.add(req.headers());
-      this.cachedHeaders = headers;
+      for (var entry : customizer.extraHeadersSupplier.get().entrySet()) {
+        headers.add(entry.getKey(), entry.getValue());
+      }
     }
     headers.remove(HttpHeaderNames.CONTENT_LENGTH);
     headers.add(HttpHeaderNames.CONTENT_LENGTH, bodyBuf.readableBytes());

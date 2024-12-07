@@ -20,6 +20,7 @@ package org.apache.flink.statefun.flink.core.functions;
 import java.time.Duration;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import org.apache.flink.statefun.flink.core.StatefulFunctionsCustomizer;
 import org.apache.flink.statefun.flink.core.backpressure.InternalContext;
 import org.apache.flink.statefun.flink.core.di.Inject;
 import org.apache.flink.statefun.flink.core.di.Label;
@@ -40,6 +41,7 @@ final class ReusableContext implements ApplyingContext, InternalContext {
   private final SideOutputSink sideOutputSink;
   private final State state;
   private final MessageFactory messageFactory;
+  private final StatefulFunctionsCustomizer customizer;
 
   private Message in;
   private LiveFunction function;
@@ -53,8 +55,8 @@ final class ReusableContext implements ApplyingContext, InternalContext {
       AsyncSink asyncSink,
       SideOutputSink sideoutputSink,
       @Label("state") State state,
-      MessageFactory messageFactory) {
-
+      MessageFactory messageFactory,
+      @Label("customizer") StatefulFunctionsCustomizer customizer) {
     this.thisPartition = Objects.requireNonNull(partition);
     this.localSink = Objects.requireNonNull(localSink);
     this.remoteSink = Objects.requireNonNull(remoteSink);
@@ -63,6 +65,7 @@ final class ReusableContext implements ApplyingContext, InternalContext {
     this.state = Objects.requireNonNull(state);
     this.messageFactory = Objects.requireNonNull(messageFactory);
     this.asyncSink = Objects.requireNonNull(asyncSink);
+    this.customizer = Objects.requireNonNull(customizer);
   }
 
   @Override
@@ -148,6 +151,11 @@ final class ReusableContext implements ApplyingContext, InternalContext {
   @Override
   public FunctionTypeMetrics functionTypeMetrics() {
     return function.metrics();
+  }
+
+  @Override
+  public StatefulFunctionsCustomizer getCustomizer() {
+    return customizer;
   }
 
   @Override

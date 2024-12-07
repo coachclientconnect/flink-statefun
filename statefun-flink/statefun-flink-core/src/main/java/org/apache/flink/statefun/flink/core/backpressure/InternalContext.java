@@ -19,6 +19,7 @@
 package org.apache.flink.statefun.flink.core.backpressure;
 
 import org.apache.flink.annotation.Internal;
+import org.apache.flink.statefun.flink.core.StatefulFunctionsCustomizer;
 import org.apache.flink.statefun.flink.core.metrics.FunctionTypeMetrics;
 import org.apache.flink.statefun.sdk.Context;
 
@@ -45,4 +46,11 @@ public interface InternalContext extends Context {
    * @return the metrics handle for the current invoked function's type.
    */
   FunctionTypeMetrics functionTypeMetrics();
+
+  /**
+   * Returns the extra headers provider.
+   *
+   * @return the extra headers provider
+   */
+  StatefulFunctionsCustomizer getCustomizer();
 }

@@ -21,10 +21,9 @@ import static org.apache.flink.configuration.description.TextElement.code;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+import java.util.function.Supplier;
+import javax.annotation.Nullable;
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.ConfigOptions;
 import org.apache.flink.configuration.Configuration;
@@ -145,6 +144,8 @@ public class StatefulFunctionsConfig implements Serializable {
 
   private final Map<String, String> globalConfigurations = new HashMap<>();
 
+  @Nullable private Supplier<Map<String, List<String>>> extraHeadersSupplier;
+
   /**
    * Create a new configuration object based on the values set in flink-conf.
    *
@@ -194,6 +195,14 @@ public class StatefulFunctionsConfig implements Serializable {
   /** Sets the custom payload serializer class name * */
   public void setCustomPayloadSerializerClassName(String customPayloadSerializerClassName) {
     this.customPayloadSerializerClassName = customPayloadSerializerClassName;
+  }
+
+  public StatefulFunctionsCustomizer getCustomizer() {
+    return new StatefulFunctionsCustomizer(this.extraHeadersSupplier);
+  }
+
+  public void setExtraHeadersSupplier(Supplier<Map<String, List<String>>> extraHeadersSupplier) {
+    this.extraHeadersSupplier = Objects.requireNonNull(extraHeadersSupplier);
   }
 
   /** Returns the Flink job name that appears in the Web UI. */

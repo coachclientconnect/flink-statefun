@@ -34,6 +34,7 @@ import org.apache.flink.shaded.netty4.io.netty.channel.ChannelDuplexHandler;
 import org.apache.flink.shaded.netty4.io.netty.channel.ChannelHandlerContext;
 import org.apache.flink.shaded.netty4.io.netty.channel.ChannelPromise;
 import org.apache.flink.shaded.netty4.io.netty.handler.codec.http.*;
+import org.apache.flink.statefun.flink.core.StatefulFunctionsCustomizer;
 import org.apache.flink.statefun.flink.core.httpfn.TransportClientTest;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -257,7 +258,8 @@ public class NettyClientTest extends TransportClientTest {
             nettyClientAndStatusCodeFuture.nettyClient,
             getFakeMetrics(),
             getStubRequestSummary(),
-            getEmptyToFunction());
+            getEmptyToFunction(),
+            new StatefulFunctionsCustomizer(null));
     nettyRequest.start();
 
     try {

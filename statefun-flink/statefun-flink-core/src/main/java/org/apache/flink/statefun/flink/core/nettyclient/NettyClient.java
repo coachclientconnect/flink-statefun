@@ -45,6 +45,7 @@ import org.apache.flink.shaded.netty4.io.netty.handler.ssl.SslContext;
 import org.apache.flink.shaded.netty4.io.netty.handler.ssl.SslContextBuilder;
 import org.apache.flink.shaded.netty4.io.netty.util.concurrent.ScheduledFuture;
 import org.apache.flink.statefun.flink.common.ResourceLocator;
+import org.apache.flink.statefun.flink.core.StatefulFunctionsCustomizer;
 import org.apache.flink.statefun.flink.core.metrics.RemoteInvocationMetrics;
 import org.apache.flink.statefun.flink.core.reqreply.RequestReplyClient;
 import org.apache.flink.statefun.flink.core.reqreply.ToFunctionRequestSummary;
@@ -127,8 +128,9 @@ final class NettyClient implements RequestReplyClient, NettyClientService {
   public CompletableFuture<FromFunction> call(
       ToFunctionRequestSummary requestSummary,
       RemoteInvocationMetrics metrics,
-      ToFunction toFunction) {
-    NettyRequest request = new NettyRequest(this, metrics, requestSummary, toFunction);
+      ToFunction toFunction,
+      StatefulFunctionsCustomizer customizer) {
+    NettyRequest request = new NettyRequest(this, metrics, requestSummary, toFunction, customizer);
     return request.start();
   }
 

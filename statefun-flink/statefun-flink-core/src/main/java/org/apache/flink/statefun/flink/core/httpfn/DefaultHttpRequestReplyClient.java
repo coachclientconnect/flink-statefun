@@ -32,6 +32,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import org.apache.flink.statefun.flink.core.StatefulFunctionsCustomizer;
 import org.apache.flink.statefun.flink.core.metrics.RemoteInvocationMetrics;
 import org.apache.flink.statefun.flink.core.reqreply.RequestReplyClient;
 import org.apache.flink.statefun.flink.core.reqreply.ToFunctionRequestSummary;
@@ -56,13 +57,19 @@ final class DefaultHttpRequestReplyClient implements RequestReplyClient {
   public CompletableFuture<FromFunction> call(
       ToFunctionRequestSummary requestSummary,
       RemoteInvocationMetrics metrics,
-      ToFunction toFunction) {
+      ToFunction toFunction,
+      StatefulFunctionsCustomizer customizer) {
+    Request.Builder requestBuilder = new Request.Builder().url(url);
+    final var headers = customizer.extraHeadersSupplier.get();
+    for (var entry : headers.entrySet()) {
+      for (var value : entry.getValue()) {
+        requestBuilder.addHeader(entry.getKey(), value);
+      }
+    }
     Request request =
-        new Request.Builder()
-            .url(url)
+        requestBuilder
             .post(RequestBody.create(MEDIA_TYPE_BINARY, toFunction.toByteArray()))
             .build();
-
     Call newCall = client.newCall(request);
     RetryingCallback callback =
         new RetryingCallback(requestSummary, metrics, newCall.timeout(), isShutdown);

@@ -25,6 +25,7 @@ import java.time.Duration;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import org.apache.flink.annotation.VisibleForTesting;
+import org.apache.flink.statefun.flink.core.StatefulFunctionsCustomizer;
 import org.apache.flink.statefun.flink.core.backpressure.InternalContext;
 import org.apache.flink.statefun.flink.core.metrics.RemoteInvocationMetrics;
 import org.apache.flink.statefun.sdk.Address;
@@ -161,7 +162,7 @@ public final class RequestReplyFunction implements StatefulFunction {
       // definitions are the same as in the previous attempt.
       // We create a retry batch and let the SDK reply
       // with the correct state specs.
-      sendToFunction(context, createRetryBatch(batch));
+      sendToFunction(context, createRetryBatch(batch), context.getCustomizer());
       return;
     }
     if (asyncResult.failure()) {
@@ -198,7 +199,7 @@ public final class RequestReplyFunction implements StatefulFunction {
     managedStates.registerStates(incompleteContext.getMissingValuesList());
 
     final InvocationBatchRequest.Builder retryBatch = createRetryBatch(originalBatch);
-    sendToFunction(context, retryBatch);
+    sendToFunction(context, retryBatch, context.getCustomizer());
   }
 
   private void handleInvocationResultResponse(InternalContext context, InvocationResponse result) {
@@ -223,7 +224,7 @@ public final class RequestReplyFunction implements StatefulFunction {
       requestState.set(0);
       batch.clear();
       context.functionTypeMetrics().consumeBacklogMessages(numBatched);
-      sendToFunction(context, nextBatch);
+      sendToFunction(context, nextBatch, context.getCustomizer());
     }
   }
 
@@ -318,19 +319,22 @@ public final class RequestReplyFunction implements StatefulFunction {
   private void sendToFunction(InternalContext context, Invocation.Builder invocationBuilder) {
     InvocationBatchRequest.Builder batchBuilder = InvocationBatchRequest.newBuilder();
     batchBuilder.addInvocations(invocationBuilder);
-    sendToFunction(context, batchBuilder);
+    sendToFunction(context, batchBuilder, context.getCustomizer());
   }
 
   /** Sends a {@link InvocationBatchRequest} to the remote function. */
   private void sendToFunction(
-      InternalContext context, InvocationBatchRequest.Builder batchBuilder) {
+      InternalContext context,
+      InvocationBatchRequest.Builder batchBuilder,
+      StatefulFunctionsCustomizer customizer) {
     batchBuilder.setTarget(sdkAddressToPolyglotAddress(context.self()));
     managedStates.attachStateValues(batchBuilder);
     ToFunction toFunction = ToFunction.newBuilder().setInvocation(batchBuilder).build();
-    sendToFunction(context, toFunction);
+    sendToFunction(context, toFunction, customizer);
   }
 
-  private void sendToFunction(InternalContext context, ToFunction toFunction) {
+  private void sendToFunction(
+      InternalContext context, ToFunction toFunction, StatefulFunctionsCustomizer customizer) {
     ToFunctionRequestSummary requestSummary =
         new ToFunctionRequestSummary(
             context.self(),
@@ -339,7 +343,7 @@ public final class RequestReplyFunction implements StatefulFunction {
             toFunction.getInvocation().getInvocationsCount());
     RemoteInvocationMetrics metrics = context.functionTypeMetrics();
     CompletableFuture<FromFunction> responseFuture =
-        client.call(requestSummary, metrics, toFunction);
+        client.call(requestSummary, metrics, toFunction, customizer);
 
     if (isFirstRequestSent) {
       context.registerAsyncOperation(toFunction, responseFuture);

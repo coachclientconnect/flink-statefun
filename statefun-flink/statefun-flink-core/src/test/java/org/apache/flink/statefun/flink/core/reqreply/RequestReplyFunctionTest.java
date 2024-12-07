@@ -38,6 +38,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import org.apache.flink.statefun.flink.core.StatefulFunctionsCustomizer;
 import org.apache.flink.statefun.flink.core.backpressure.InternalContext;
 import org.apache.flink.statefun.flink.core.metrics.FunctionTypeMetrics;
 import org.apache.flink.statefun.flink.core.metrics.RemoteInvocationMetrics;
@@ -393,7 +394,8 @@ public class RequestReplyFunctionTest {
     public CompletableFuture<FromFunction> call(
         ToFunctionRequestSummary requestSummary,
         RemoteInvocationMetrics metrics,
-        ToFunction toFunction) {
+        ToFunction toFunction,
+        StatefulFunctionsCustomizer customizer) {
       this.wasSentToFunction = toFunction;
       try {
         return CompletableFuture.completedFuture(this.fromFunction.get());
@@ -476,6 +478,11 @@ public class RequestReplyFunctionTest {
     @Override
     public BacklogTrackingMetrics functionTypeMetrics() {
       return fakeMetrics;
+    }
+
+    @Override
+    public StatefulFunctionsCustomizer getCustomizer() {
+      return new StatefulFunctionsCustomizer(null);
     }
 
     @Override

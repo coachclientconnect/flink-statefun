@@ -35,6 +35,7 @@ import org.apache.flink.shaded.netty4.io.netty.channel.ChannelMetadata;
 import org.apache.flink.shaded.netty4.io.netty.channel.ChannelOutboundBuffer;
 import org.apache.flink.shaded.netty4.io.netty.channel.EventLoop;
 import org.apache.flink.shaded.netty4.io.netty.handler.codec.http.ReadOnlyHttpHeaders;
+import org.apache.flink.statefun.flink.core.StatefulFunctionsCustomizer;
 import org.apache.flink.statefun.flink.core.metrics.RemoteInvocationMetrics;
 import org.apache.flink.statefun.flink.core.nettyclient.exceptions.DisconnectedException;
 import org.apache.flink.statefun.flink.core.nettyclient.exceptions.ShutdownException;
@@ -54,7 +55,12 @@ public class NettyRequestTest {
   public void successfulSanity() {
     FakeClient fakeClient = new FakeClient();
     NettyRequest request =
-        new NettyRequest(fakeClient, FAKE_METRICS, FAKE_SUMMARY, ToFunction.getDefaultInstance());
+        new NettyRequest(
+            fakeClient,
+            FAKE_METRICS,
+            FAKE_SUMMARY,
+            ToFunction.getDefaultInstance(),
+            new StatefulFunctionsCustomizer(null));
 
     request.start();
     request.complete(FromFunction.getDefaultInstance());
@@ -66,7 +72,12 @@ public class NettyRequestTest {
   public void unSuccessfulSanity() {
     FakeClient fakeClient = new FakeClient();
     NettyRequest request =
-        new NettyRequest(fakeClient, FAKE_METRICS, FAKE_SUMMARY, ToFunction.getDefaultInstance());
+        new NettyRequest(
+            fakeClient,
+            FAKE_METRICS,
+            FAKE_SUMMARY,
+            ToFunction.getDefaultInstance(),
+            new StatefulFunctionsCustomizer(null));
 
     request.start();
     request.completeAttemptExceptionally(ShutdownException.INSTANCE);
@@ -89,7 +100,8 @@ public class NettyRequestTest {
             new alwaysFailingToAcquireChannel(),
             FAKE_METRICS,
             FAKE_SUMMARY,
-            ToFunction.getDefaultInstance());
+            ToFunction.getDefaultInstance(),
+            new StatefulFunctionsCustomizer(null));
 
     CompletableFuture<FromFunction> result = request.start();
 
@@ -100,7 +112,12 @@ public class NettyRequestTest {
   public void acquiredChannelShouldBeReleased() {
     FakeClient fakeClient = new FakeClient();
     NettyRequest request =
-        new NettyRequest(fakeClient, FAKE_METRICS, FAKE_SUMMARY, ToFunction.getDefaultInstance());
+        new NettyRequest(
+            fakeClient,
+            FAKE_METRICS,
+            FAKE_SUMMARY,
+            ToFunction.getDefaultInstance(),
+            new StatefulFunctionsCustomizer(null));
 
     request.start();
 
@@ -121,7 +138,12 @@ public class NettyRequestTest {
 
     client fakeClient = new client();
     NettyRequest request =
-        new NettyRequest(fakeClient, FAKE_METRICS, FAKE_SUMMARY, ToFunction.getDefaultInstance());
+        new NettyRequest(
+            fakeClient,
+            FAKE_METRICS,
+            FAKE_SUMMARY,
+            ToFunction.getDefaultInstance(),
+            new StatefulFunctionsCustomizer(null));
 
     request.start();
 
@@ -134,7 +156,12 @@ public class NettyRequestTest {
     fakeClient.REQUEST_BUDGET = Duration.ofMillis(20).toNanos();
 
     NettyRequest request =
-        new NettyRequest(fakeClient, FAKE_METRICS, FAKE_SUMMARY, ToFunction.getDefaultInstance());
+        new NettyRequest(
+            fakeClient,
+            FAKE_METRICS,
+            FAKE_SUMMARY,
+            ToFunction.getDefaultInstance(),
+            new StatefulFunctionsCustomizer(null));
 
     request.start();
     // move the clock 5ms forward
@@ -152,7 +179,12 @@ public class NettyRequestTest {
     fakeClient.REQUEST_BUDGET = Duration.ofMillis(20).toNanos();
 
     NettyRequest request =
-        new NettyRequest(fakeClient, FAKE_METRICS, FAKE_SUMMARY, ToFunction.getDefaultInstance());
+        new NettyRequest(
+            fakeClient,
+            FAKE_METRICS,
+            FAKE_SUMMARY,
+            ToFunction.getDefaultInstance(),
+            new StatefulFunctionsCustomizer(null));
 
     request.start();
 

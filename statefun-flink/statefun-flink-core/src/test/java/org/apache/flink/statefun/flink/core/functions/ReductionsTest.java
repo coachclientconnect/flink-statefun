@@ -45,6 +45,7 @@ import org.apache.flink.runtime.state.*;
 import org.apache.flink.runtime.state.heap.HeapPriorityQueueElement;
 import org.apache.flink.runtime.state.internal.InternalListState;
 import org.apache.flink.shaded.guava31.com.google.common.util.concurrent.MoreExecutors;
+import org.apache.flink.statefun.flink.core.StatefulFunctionsCustomizer;
 import org.apache.flink.statefun.flink.core.StatefulFunctionsUniverse;
 import org.apache.flink.statefun.flink.core.TestUtils;
 import org.apache.flink.statefun.flink.core.backpressure.ThresholdBackPressureValve;
@@ -82,8 +83,8 @@ public class ReductionsTest {
             TestUtils.ENVELOPE_FACTORY,
             MoreExecutors.directExecutor(),
             new FakeMetricGroup(),
-            new FakeMapState<>());
-
+            new FakeMapState<>(),
+            new StatefulFunctionsCustomizer(null));
     assertThat(reductions, notNullValue());
   }
 

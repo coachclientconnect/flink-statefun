@@ -24,7 +24,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import javax.annotation.Nullable;
 import org.apache.flink.shaded.netty4.io.netty.channel.Channel;
-import org.apache.flink.shaded.netty4.io.netty.handler.codec.http.ReadOnlyHttpHeaders;
+import org.apache.flink.shaded.netty4.io.netty.handler.codec.http.HttpHeaders;
+import org.apache.flink.statefun.flink.core.StatefulFunctionsCustomizer;
 import org.apache.flink.statefun.flink.core.metrics.RemoteInvocationMetrics;
 import org.apache.flink.statefun.flink.core.nettyclient.exceptions.RequestTimeoutException;
 import org.apache.flink.statefun.flink.core.nettyclient.exceptions.ShutdownException;
@@ -59,18 +60,21 @@ final class NettyRequest {
   private int numberOfAttempts;
   @Nullable private Closeable retryTask;
   @Nullable private volatile Channel attemptChannel;
+  private final StatefulFunctionsCustomizer customizer;
 
   @OnFlinkThread
   NettyRequest(
       NettyClientService client,
       RemoteInvocationMetrics metrics,
       ToFunctionRequestSummary requestSummary,
-      ToFunction toFunction) {
+      ToFunction toFunction,
+      StatefulFunctionsCustomizer customizer) {
     this.client = Objects.requireNonNull(client);
     this.reqSummary = Objects.requireNonNull(requestSummary);
     this.metrics = Objects.requireNonNull(metrics);
     this.toFunction = Objects.requireNonNull(toFunction);
     this.requestCreatedNanos = client.systemNanoTime();
+    this.customizer = customizer;
   }
 
   // --------------------------------------------------------------------------------------------
@@ -244,6 +248,10 @@ final class NettyRequest {
     return client.queryPath();
   }
 
+  StatefulFunctionsCustomizer getCustomizer() {
+    return customizer;
+  }
+
   private void analyzeCausalChain(Throwable cause) throws Throwable {
     while (cause != null) {
       if (!isRetryable(cause)) {
@@ -269,7 +277,7 @@ final class NettyRequest {
     return Math.min(delay, remainingRequestBudget);
   }
 
-  public ReadOnlyHttpHeaders headers() {
+  public HttpHeaders headers() {
     return client.headers();
   }
 }
